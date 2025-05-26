@@ -33,6 +33,18 @@
 #   Tomislav Ivek
 #     <tomislav.ivek@gmail.com>
 
+_evmfs_available="$( \
+  command \
+    -v \
+    "evmfs" || \
+    true)"
+if [[ ! -v "_evmfs" ]]; then
+  if [[ "${_evmfs_available}" != "" ]]; then
+    _evmfs="true"
+  elif [[ "${_evmfs_available}" == "" ]]; then
+    _evmfs="false"
+  fi
+fi
 _py="python"
 _pyver="$( \
   "${_py}" \
@@ -73,10 +85,35 @@ makedepends=(
   "${_py}-setuptools"
 )
 _tarname="${pkgname}-${pkgver}"
-_uri="${url}/archive/${pkgver}.tar.gz"
-_src="${_tarname}.tar.gz::${_uri}"
+_evmfs_network="100"
+_evmfs_address="0x69470b18f8b8b5f92b48f6199dcb147b4be96571"
+_evmfs_ns="0x87003Bd6C074C713783df04f36517451fF34CBEf"
+_archive_sum="1ff28cdf1f7e10d853e0d147b0cb170e42f842cc8bcc481b5e6b166f34aa8fee"
+_evmfs_archive_uri="evmfs://${_evmfs_network}/${_evmfs_address}/${_evmfs_ns}/${_archive_sum}"
+_evmfs_archive_src="${_tarname}.zip::${_evmfs_archive_uri}"
+_archive_sig_sum="e301bdd15c2ae191773c7b7435d08c84d085cce5a907e0c0cab0ece92aff958b"
+_archive_sig_uri="evmfs://${_evmfs_network}/${_evmfs_address}/${_evmfs_ns}/${_archive_sig_sum}"
+_archive_sig_src="${_tarname}.zip.sig::${_archive_sig_uri}"
+if [[ "${_evmfs}" == "true" ]]; then
+  makedepends+=(
+    "evmfs"
+  )
+  _src="${_evmfs_archive_src}"
+  source+=(
+    "${_archive_sig_src}"
+  )
+  sha256sums+=(
+    "${_archive_sig_sum}"
+  )
+elif [[ "${_evmfs}" == "false" ]]; then
+  _uri="${url}/archive/${pkgver}.tar.gz"
+  _src="${_tarname}.tar.gz::${_uri}"
+fi
 source=(
   "${_src}"
+)
+sha256sums=(
+  "${_archive_sum}"
 )
 sha512sums=(
   '5a988755ed97aa1ba9b97595738200821787c2cc71f40198cffdc22c4b823fe132668946ecc3f0fb66d6c33fe0ec7bdcfa9c9794e3d382b38f8551d15d4af5e6'
